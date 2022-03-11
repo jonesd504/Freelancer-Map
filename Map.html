@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Address Selection</title>
+    <style>
+      body {
+        margin: 0;
+      }
+
+      .sb-title {
+        position: relative;
+        top: -12px;
+        font-family: Roboto, sans-serif;
+        font-weight: 500;
+      }
+
+      .sb-title-icon {
+        position: relative;
+        top: -5px;
+      }
+
+      .user-image {
+        position: relative;
+        height: 50px;
+        width: 50px;
+      }
+
+      .card-container {
+        display: flex;
+        height: 240px;
+        width: 310px;
+      }
+
+      .panel {
+        background: white;
+        width: 310
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-evenly;
+      }
+
+
+      .map {
+        width: 310px;
+      }
+
+      h2 {
+        margin: 0;
+        font-family: Roboto, sans-serif;
+      }
+
+
+      input {
+        border: 0;
+        border-bottom: 1px solid black;
+        font-size: 14px;
+        font-family: Roboto, sans-serif;
+        font-style: normal;
+        font-weight: normal;
+      }
+
+      .half-input-container {
+        display: flex;
+        justify-content: space-evenly;
+      }
+
+      .button-cta {
+        height: 40px;
+        width: 40%;
+        background: #3367d6;
+        color: white;
+        font-size: 15px;
+        text-transform: uppercase;
+        font-family: Roboto, sans-serif;
+        border: 0;
+        border-radius: 3px;
+        box-shadow: 0 4px 8px 0 rgba(0,0,0,0.48);
+        cursor: pointer;
+        justify-content: space-evenly;
+      }
+    </style>
+    <script>
+    "use strict";
+    let send;
+    let allMarkers;
+    let infowindow;
+
+
+    function onMessage(map) {  
+        window.onmessage = (event) => {
+     if (event.data) {
+       let received = JSON.parse(JSON.stringify(event.data));
+       console.log(received);
+       let Picture = received.user.picture;
+       	if (Picture.startsWith("image:")){
+		    let wixImageURL = "";
+ 		    wixImageURL = "https://static.wixstatic.com/media/";
+ 		    let wixLocalURL = "";
+ 	    	wixLocalURL = Picture.replace('image://v1/', '');
+ 		    wixLocalURL = wixLocalURL.substr(wixLocalURL.lastIndexOf('/')+1);
+ 		    let userPicture = wixImageURL + wixLocalURL;
+         let userfirstName = received.user.name;
+         let jobTitle = received.user.jobTitle;
+         console.log(userPicture);
+             const contentString =
+    '<div id="content">' +
+    '<div id="siteNotice">' +
+    '<div>'+
+    '<img class="user-image" src="'+userPicture+'" alt="">'+
+    '</div>'+
+    '<h1 id="firstHeading" class="firstHeading">'+userfirstName+'</h1>' +
+    '<div id="bodyContent">' +
+    "<p>"+jobTitle+"</p>" +
+    "</div>" +
+    "</div>";
+
+    console.log(contentString);
+         infowindow = new google.maps.InfoWindow({
+           content: contentString,
+            });
+ 	      }
+       
+      let allMarkers = received.data.items;
+
+      for (let i = 0; i < allMarkers.length; i++) {
+        console.log(allMarkers[i].formatted_address);
+    const newMarkers = new google.maps.Marker({map: map, position:new google.maps.LatLng(allMarkers[i].lat, allMarkers[i].lng), draggable: false,icon: {url: `https://static.wixstatic.com/shapes/59e08e_8283e9b7b69548f4bdb288f0d173dd34.svg`, scaledSize:new google.maps.Size(32,32)}});
+  }
+     }
+
+
+
+     }
+    }
+      
+   
+
+      
+     
+    function initMap() {
+      
+      const componentForm = [
+        'postal_code',
+      ];
+      const map = new google.maps.Map(document.getElementById("map"), {
+        mapId: "950da0394b6854df",
+        zoom: 5,
+        center: { lat: 54.4721981, lng: -3.5724596 },
+        mapTypeControl: false,
+        fullscreenControl: false,
+        zoomControl: false,
+        streetViewControl: false
+      });
+      onMessage(map);
+      const marker = new google.maps.Marker({map: map, draggable: false,icon: {url: `https://static.wixstatic.com/shapes/59e08e_8283e9b7b69548f4bdb288f0d173dd34.svg`, scaledSize:new google.maps.Size(32,32)}});
+      const autocompleteInput = document.getElementById('postal_code');
+      const autocomplete = new google.maps.places.Autocomplete(autocompleteInput);
+      autocomplete.addListener('place_changed', function () {
+        marker.setVisible(false);
+        const place = autocomplete.getPlace();
+        send = JSON.parse(JSON.stringify(place));
+        if (!place.geometry) {
+          // User entered the name of a Place that was not suggested and
+          // pressed the Enter key, or the Place Details request failed.
+          window.alert('No details available for input: \'' + place.name + '\'');
+          return;
+        }
+        renderAddress(place);
+        infowindow.open({
+      anchor: marker,
+      map,
+      shouldFocus: false,
+    });
+      });
+
+        marker.addListener("mouseover", () => {
+    infowindow.open({
+      anchor: marker,
+      map,
+      shouldFocus: false,
+    });
+  });
+      
+    
+marker.addListener("mouseout", () => {
+    infowindow.close();
+  });
+
+  
+      
+      
+      
+      
+      function renderAddress(place) {
+        map.setCenter(place.geometry.location);
+        marker.setPosition(place.geometry.location);
+        marker.setVisible(true);
+      }
+      
+    }
+    function button_click() {
+        window.parent.postMessage(send, "https://www.freelancedatabase.org");
+      }
+    </script>
+  </head>
+  <body>
+    <div class="card-container">
+      <div class="panel">
+        <div>
+          <img class="sb-title-icon" src="https://fonts.gstatic.com/s/i/googlematerialicons/location_pin/v5/24px.svg" alt="">
+          <span class="sb-title">Put Yourself on the Map!</span>
+        </div>
+        
+        
+        
+        <div class="half-input-container">
+          <input type="text" class="input" placeholder="Post code" id="postal_code"/>
+        </div>
+        <button class="button-cta" onclick="button_click()">Confirm</button>
+      </div>
+      </div>
+      <div class="card-container">
+      <div class="map" id="map"></div>
+    </div>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCJjqjdwqbTtRAXjLqRXhE5j6JcQk5CnRY&libraries=places&callback=initMap&channel=GMPSB_addressselection_v1_cABC" async defer></script>
+  </body>
+</html>
